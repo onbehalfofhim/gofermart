@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/onbehalfofhim/gofermart/internal/auth"
@@ -16,6 +17,9 @@ func main() {
 	if err != nil {
 		// logger.Error("Error in parse flags and variables", "error", error)
 	}
+
+	fmt.Printf("%s", cfg.RunAddr)
+	fmt.Printf("%s", cfg.JWTSecret)
 
 	// передаем в приложение параметры JWT
 	jwt := auth.NewJWT(cfg.JWTSecret)
