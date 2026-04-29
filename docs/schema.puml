@@ -1,0 +1,55 @@
+@startuml
+autonumber "<b>[00]"
+
+participant user as u
+participant gofermart_onlineshop as shop
+participant gofermart as gm
+participant accural as acc
+
+activate gm
+
+== Регистрация пользователя ==
+    u->gm: POST /api/user/register
+    gm->gm: проверка логина на уникальность
+    
+    gm->gm: аутентификация
+    gm-->u
+
+group "Черный ящик"
+    u->shop: покупка
+    shop->acc: передача заказа для расчета баллов лояльности
+    acc-->shop
+    shop-->u
+end group
+
+== Загрузка номера заказа ==
+    u->gm: POST /api/user/orders
+    gm->gm: Связть номер заказа и пользователя
+    gm->acc: GET /api/orders/{number}
+    acc-->gm: статус расчета заказа
+    opt баллы рассчитаны
+        gm->gm: начислить баллы на счет пользователя
+    end
+    gm-->u:
+== Получение списка загруженных номеров заказов ==
+    u->gm: GET /api/user/orders
+    gm->gm: сбор информации о загруженных заказах
+    gm-->u: список заказов
+
+== Получение текущего баланса пользователя ==
+    u->gm: GET /api/user/balance
+    gm-->u: баланс пользовтеля
+
+== Запрос на списание средств ==
+    u->gm: POST /api/user/balance/withdraw
+    gm->gm: списать баллы со счета пользователя
+    gm-->u: 
+
+== Получение информации о выводе средств ==
+    u->gm: GET /api/user/withdrawals
+    gm->gm: сбор информации о списаниях
+    gm-->u: списания пользователя
+
+deactivate gm
+
+@enduml
