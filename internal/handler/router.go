@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// настройка маршрутов для приложения
 func (h *Handler) Route() http.Handler {
 	r := chi.NewRouter()
 

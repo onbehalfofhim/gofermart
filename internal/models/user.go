@@ -4,6 +4,7 @@ package models
 
 import "github.com/google/uuid"
 
+// модель пользователя приложения
 type User struct {
 	ID           uuid.UUID `json:"id"`
 	Login        string    `json:"login"`
@@ -12,7 +13,13 @@ type User struct {
 	// UpdatedAt    time.Time `json:"updated_at"`
 }
 
+// модель запроса аутентификации
 type AuthRequest struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
+}
+
+// модель ответа на аутентификацию пользователя
+type AuthResponse struct {
+	Token string `json:"token"`
 }
