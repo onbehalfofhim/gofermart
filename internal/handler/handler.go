@@ -46,13 +46,8 @@ func (h *Handler) Register() http.HandlerFunc {
 			return
 		}
 
-		resp := models.AuthResponse{
-			Token: token,
-		}
-
+		w.Header().Set("Authorization", token)
 		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
 	}
 }
 
@@ -82,12 +77,7 @@ func (h *Handler) Login() http.HandlerFunc {
 			return
 		}
 
-		resp := models.AuthResponse{
-			Token: token,
-		}
-
+		w.Header().Set("Authorization", token)
 		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
 	}
 }
