@@ -4,19 +4,23 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/onbehalfofhim/gofermart/internal/logger"
 	"github.com/onbehalfofhim/gofermart/internal/models"
+	"github.com/onbehalfofhim/gofermart/internal/repository"
 	"github.com/onbehalfofhim/gofermart/internal/service"
 )
 
 // HTTP хендлер для приложения
 type Handler struct {
 	userService *service.UserService
+	logger      *logger.Logger
 }
 
 // констуктор для HTTP хендлера
-func NewHandler(u *service.UserService) *Handler {
+func NewHandler(u *service.UserService, l *logger.Logger) *Handler {
 	return &Handler{
 		userService: u,
+		logger:      l,
 	}
 }
 
@@ -31,18 +35,32 @@ func (h *Handler) Register() http.HandlerFunc {
 		var req models.AuthRequest
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "invalid request", http.StatusBadRequest)
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
 
 		if req.Login == "" || req.Password == "" {
-			http.Error(w, "login and password required", http.StatusBadRequest)
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
 
 		token, err := h.userService.Register(req.Login, req.Password)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusConflict)
+			switch err {
+			case repository.ErrUserExists:
+				http.Error(w,
+					http.StatusText(http.StatusConflict),
+					http.StatusConflict,
+				)
+			default:
+				h.logger.Error("failed to register user", "error", err)
+
+				http.Error(w,
+					http.StatusText(http.StatusInternalServerError),
+					http.StatusInternalServerError,
+				)
+			}
+
 			return
 		}
 
@@ -73,7 +91,21 @@ func (h *Handler) Login() http.HandlerFunc {
 
 		token, err := h.userService.Login(req.Login, req.Password)
 		if err != nil {
-			http.Error(w, "invalid login/password", http.StatusUnauthorized)
+			switch err {
+			case service.ErrInvalidCredentials:
+				http.Error(w,
+					http.StatusText(http.StatusUnauthorized),
+					http.StatusUnauthorized,
+				)
+			default:
+				h.logger.Error("failed to login user", "error", err)
+
+				http.Error(w,
+					http.StatusText(http.StatusInternalServerError),
+					http.StatusInternalServerError,
+				)
+			}
+
 			return
 		}
 
