@@ -31,8 +31,6 @@ func main() {
 	if err := run(cfg, logger); err != nil {
 		logger.Error("Error in run server", "error", err)
 	}
-
-	logger.Info("server stopped")
 }
 
 func run(cfg config.Config, logger *logger.Logger) error {
@@ -41,6 +39,7 @@ func run(cfg config.Config, logger *logger.Logger) error {
 
 	var userRepo repository.UserRepo
 
+	// подключение к БД
 	db, err := sql.Open("pgx", cfg.DatabaseURI)
 	if err != nil {
 		logger.Error("Error connect to data base", "error", err)
@@ -48,6 +47,7 @@ func run(cfg config.Config, logger *logger.Logger) error {
 	}
 	defer db.Close()
 
+	// применение миграций
 	if err := migrations.ApplyMigrations(db, "file://migrations"); err != nil {
 		logger.Error("Error apply migrations", "error", err)
 		return fmt.Errorf("can't apply migrations: %w", err)

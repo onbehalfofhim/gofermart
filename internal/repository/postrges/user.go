@@ -11,18 +11,17 @@ import (
 	"github.com/onbehalfofhim/gofermart/internal/repository"
 )
 
+// представляет репозиторий для работы с пользователями
 type UsersRepository struct {
 	db *sql.DB
 }
 
+// создает новый репозиторий пользователей
 func NewUserRepository(db *sql.DB) *UsersRepository {
 	return &UsersRepository{db: db}
 }
 
-func (r *UsersRepository) Ping(ctx context.Context) error {
-	return r.db.PingContext(ctx)
-}
-
+// создание пользователя в БД
 func (r *UsersRepository) Create(login, passwordHash string) (*models.User, error) {
 	query := `INSERT INTO users (id, login, password_hash)
 		VALUES ($1, $2, $3)
@@ -41,6 +40,9 @@ func (r *UsersRepository) Create(login, passwordHash string) (*models.User, erro
 
 	if err != nil {
 		var pgErr *pgconn.PgError
+
+		// проверка, что полученная ошибка - ошибка уникальности логина
+		// (=пользователь с таким логикном уже есть)
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" {
 				return nil, repository.ErrUserExists
@@ -52,6 +54,7 @@ func (r *UsersRepository) Create(login, passwordHash string) (*models.User, erro
 	return &user, nil
 }
 
+// поиск пользователя по логину
 func (r *UsersRepository) GetByLogin(login string) (*models.User, error) {
 	query := `
 		SELECT id, login, password_hash, created_at
