@@ -11,7 +11,6 @@ import (
 	"github.com/onbehalfofhim/gofermart/internal/config"
 	"github.com/onbehalfofhim/gofermart/internal/handler"
 	"github.com/onbehalfofhim/gofermart/internal/logger"
-	"github.com/onbehalfofhim/gofermart/internal/repository"
 	"github.com/onbehalfofhim/gofermart/internal/repository/postrges"
 	"github.com/onbehalfofhim/gofermart/internal/service"
 	"github.com/onbehalfofhim/gofermart/migrations"
@@ -37,8 +36,6 @@ func run(cfg config.Config, logger *logger.Logger) error {
 	// передаем в приложение параметры JWT
 	jwt := auth.NewJWT(cfg.JWTSecret)
 
-	var userRepo repository.UserRepo
-
 	// подключение к БД
 	db, err := sql.Open("pgx", cfg.DatabaseURI)
 	if err != nil {
@@ -53,9 +50,13 @@ func run(cfg config.Config, logger *logger.Logger) error {
 		return fmt.Errorf("can't apply migrations: %w", err)
 	}
 
-	userRepo = postrges.NewUserRepository(db)
-	userService := service.NewUserService(userRepo, jwt)
-	handler := handler.NewHandler(userService, logger)
+	userRepo := postrges.NewUsersRepository(db)
+	orderRepo := postrges.NewOrdersRepository(db)
 
-	return http.ListenAndServe(cfg.RunAddr, handler.Route(logger))
+	userService := service.NewUserService(userRepo)
+	orderService := service.NewOrderService(orderRepo)
+
+	handler := handler.NewHandler(userService, orderService, logger, jwt)
+
+	return http.ListenAndServe(cfg.RunAddr, handler.Route(logger, jwt))
 }

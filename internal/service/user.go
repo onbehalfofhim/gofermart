@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/onbehalfofhim/gofermart/internal/auth"
+	"github.com/onbehalfofhim/gofermart/internal/models"
 	"github.com/onbehalfofhim/gofermart/internal/repository"
 )
 
@@ -12,63 +13,49 @@ var ErrInvalidCredentials = errors.New("invalid credentials")
 
 // сервис работы с пользователем
 type UserService struct {
-	repo       repository.UserRepo
-	jwtManager *auth.JWT
+	repo repository.UserRepo
 }
 
 // конструктор для создания сервиса
-func NewUserService(r repository.UserRepo, j *auth.JWT) *UserService {
+func NewUserService(r repository.UserRepo) *UserService {
 	return &UserService{
-		repo:       r,
-		jwtManager: j,
+		repo: r,
 	}
 }
 
 // Регистрирация нового пользователя
-func (s *UserService) Register(login, password string) (string, error) {
+func (s *UserService) Register(login, password string) (*models.User, error) {
 	// Хешируем пароль
 	hash, err := auth.HashPassword(password)
 	if err != nil {
-		return "", fmt.Errorf("failed to hash password: %w", err)
+		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	// Создаем пользователя
 	user, err := s.repo.Create(login, hash)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	// Генерируем JWT токена
-	token, err := s.jwtManager.GenerateToken(user.ID.String())
-	if err != nil {
-		return "", fmt.Errorf("failed to generate token: %w", err)
-	}
-
-	return token, nil
+	return user, nil
 }
 
 // аутентификация пользователя
-func (s *UserService) Login(login, password string) (string, error) {
+func (s *UserService) Login(login, password string) (*models.User, error) {
 	// Получаем пользователя по логину
 	user, err := s.repo.GetByLogin(login)
 	if err != nil {
 		if err == repository.ErrUserNotFound {
-			return "", ErrInvalidCredentials
+			return nil, ErrInvalidCredentials
 		}
-		return "", err
+		return nil, err
 	}
 
 	// Проверяем пароль
 	err = auth.CheckPassword(user.PasswordHash, password)
 	if err != nil {
-		return "", ErrInvalidCredentials
+		return nil, ErrInvalidCredentials
 	}
 
-	// Генерируем JWT токена
-	token, err := s.jwtManager.GenerateToken(user.ID.String())
-	if err != nil {
-		return "", fmt.Errorf("failed to generate token: %w", err)
-	}
-
-	return token, nil
+	return user, nil
 }

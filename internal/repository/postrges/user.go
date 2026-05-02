@@ -17,7 +17,7 @@ type UsersRepository struct {
 }
 
 // создает новый репозиторий пользователей
-func NewUserRepository(db *sql.DB) *UsersRepository {
+func NewUsersRepository(db *sql.DB) *UsersRepository {
 	return &UsersRepository{db: db}
 }
 
