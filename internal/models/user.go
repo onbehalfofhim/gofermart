@@ -1,16 +1,17 @@
 package models
 
-// import "time"
+import (
+	"time"
 
-import "github.com/google/uuid"
+	"github.com/google/uuid"
+)
 
 // модель пользователя приложения
 type User struct {
 	ID           uuid.UUID `json:"id"`
 	Login        string    `json:"login"`
 	PasswordHash string    `json:"-"`
-	// CreatedAt    time.Time `json:"created_at"`
-	// UpdatedAt    time.Time `json:"updated_at"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 // модель запроса аутентификации
