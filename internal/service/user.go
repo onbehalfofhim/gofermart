@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -24,7 +25,7 @@ func NewUserService(r repository.UserRepo) *UserService {
 }
 
 // Регистрирация нового пользователя
-func (s *UserService) Register(login, password string) (*models.User, error) {
+func (s *UserService) Register(ctx context.Context, login, password string) (*models.User, error) {
 	// Хешируем пароль
 	hash, err := auth.HashPassword(password)
 	if err != nil {
@@ -32,7 +33,7 @@ func (s *UserService) Register(login, password string) (*models.User, error) {
 	}
 
 	// Создаем пользователя
-	user, err := s.repo.Create(login, hash)
+	user, err := s.repo.Create(ctx, login, hash)
 	if err != nil {
 		return nil, err
 	}
@@ -41,9 +42,9 @@ func (s *UserService) Register(login, password string) (*models.User, error) {
 }
 
 // аутентификация пользователя
-func (s *UserService) Login(login, password string) (*models.User, error) {
+func (s *UserService) Login(ctx context.Context, login, password string) (*models.User, error) {
 	// Получаем пользователя по логину
-	user, err := s.repo.GetByLogin(login)
+	user, err := s.repo.GetByLogin(ctx, login)
 	if err != nil {
 		if err == repository.ErrUserNotFound {
 			return nil, ErrInvalidCredentials

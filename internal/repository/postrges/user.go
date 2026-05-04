@@ -22,13 +22,13 @@ func NewUsersRepository(db *sql.DB) *UsersRepository {
 }
 
 // создание пользователя в БД
-func (r *UsersRepository) Create(login, passwordHash string) (*models.User, error) {
+func (r *UsersRepository) Create(ctx context.Context, login, passwordHash string) (*models.User, error) {
 	query := `INSERT INTO users (id, login, password_hash)
 		VALUES ($1, $2, $3)
 		RETURNING id, login, password_hash, created_at
 	`
 
-	row := r.db.QueryRowContext(context.Background(), query, uuid.New(), login, passwordHash)
+	row := r.db.QueryRowContext(ctx, query, uuid.New(), login, passwordHash)
 
 	var user models.User
 	err := row.Scan(
@@ -55,13 +55,13 @@ func (r *UsersRepository) Create(login, passwordHash string) (*models.User, erro
 }
 
 // поиск пользователя по логину
-func (r *UsersRepository) GetByLogin(login string) (*models.User, error) {
-	query := `
-		SELECT id, login, password_hash, created_at
+func (r *UsersRepository) GetByLogin(ctx context.Context, login string) (*models.User, error) {
+	query := `SELECT id, login, password_hash, created_at
 		FROM users
-		WHERE login = $1`
+		WHERE login = $1
+	`
 
-	row := r.db.QueryRowContext(context.Background(), query, login)
+	row := r.db.QueryRowContext(ctx, query, login)
 
 	var user models.User
 	err := row.Scan(

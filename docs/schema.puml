@@ -26,30 +26,34 @@ end group
     u->gm: POST /api/user/orders
     gm->gm: валидация JWT-токена
     gm->gm: получить номер заказа из запроса
-    gm->gm: проверить номер заказа по алгоритму Луна
+    gm->gm: <color red> проверить номер заказа по алгоритму Луна
     gm->gm: Связть номер заказа и пользователя
-    gm->acc: GET /api/orders/{number}
+    gm->acc: <color red> GET /api/orders/{number}
     acc-->gm: статус расчета заказа
-    opt баллы рассчитаны
+    opt #lightpink баллы рассчитаны
         gm->gm: начислить баллы на счет пользователя
+        gm->gm: добавить операцию
     end
     gm-->u:
 == Получение списка загруженных номеров заказов ==
-    u->gm: GET /api/user/orders
+    u->gm: <color red> GET /api/user/orders
     gm->gm: сбор информации о загруженных заказах
     gm-->u: список заказов
 
 == Получение текущего баланса пользователя ==
-    u->gm: GET /api/user/balance
+    u->gm: <color red> GET /api/user/balance
     gm-->u: баланс пользовтеля
 
 == Запрос на списание средств ==
     u->gm: POST /api/user/balance/withdraw
+    gm->gm: валидация JWT-токена
     gm->gm: списать баллы со счета пользователя
-    gm-->u: 
+    gm->gm: <color red> проверить номер заказа по алгоритму Луна
+    gm->gm: добавить операцию
+    gm-->u: ОК (если было достаточно средств)
 
 == Получение информации о выводе средств ==
-    u->gm: GET /api/user/withdrawals
+    u->gm: <color red> GET /api/user/withdrawals
     gm->gm: сбор информации о списаниях
     gm-->u: списания пользователя
 

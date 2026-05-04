@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 
 	"github.com/google/uuid"
@@ -21,9 +22,9 @@ func NewOrderService(r repository.OrderRepo) *OrderService {
 	}
 }
 
-func (s *OrderService) Create(number string, userId uuid.UUID) error {
+func (s *OrderService) Create(ctx context.Context, number string, userId uuid.UUID) error {
 	// Пытаемся создать заказ
-	order, err := s.repo.Create(number, userId)
+	order, err := s.repo.Create(ctx, number, userId)
 
 	if err != nil {
 		switch err {

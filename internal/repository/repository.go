@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 
 	"github.com/google/uuid"
@@ -9,13 +10,20 @@ import (
 
 // интерфейс хранилища пользователей приложения
 type UserRepo interface {
-	Create(login, passwordHash string) (*models.User, error)
-	GetByLogin(login string) (*models.User, error)
+	Create(ctx context.Context, login, passwordHash string) (*models.User, error)
+	GetByLogin(ctx context.Context, login string) (*models.User, error)
 }
 
 // интерфейс хранилища пользователей приложения
 type OrderRepo interface {
-	Create(number string, userId uuid.UUID) (*models.Order, error)
+	Create(ctx context.Context, number string, userId uuid.UUID) (*models.Order, error)
+}
+
+// интерфейс хранилища пользователей приложения
+type BalanceRepo interface {
+	CreateAccrual(ctx context.Context, orderNumber string, userId uuid.UUID, amount float64) error
+	CreateWithdraw(ctx context.Context, orderNumber string, userId uuid.UUID, amount float64) error
+	GetBalanceWithWithdrawn(ctx context.Context, userId uuid.UUID) (float64, float64, error)
 }
 
 var (
@@ -26,4 +34,7 @@ var (
 	// ошибки репозитория с заказами
 	ErrOrderExists   = errors.New("order number already exists")
 	ErrOrderNotFound = errors.New("order not found")
+
+	// ошибки репозитория с операциями
+	ErrInsufficientFunds = errors.New("insufficient funds")
 )

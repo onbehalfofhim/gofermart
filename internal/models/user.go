@@ -11,6 +11,7 @@ type User struct {
 	ID           uuid.UUID `json:"id"`
 	Login        string    `json:"login"`
 	PasswordHash string    `json:"-"`
+	Balance      float64   `json:"-"`
 	CreatedAt    time.Time `json:"created_at"`
 }
 

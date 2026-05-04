@@ -52,11 +52,13 @@ func run(cfg config.Config, logger *logger.Logger) error {
 
 	userRepo := postrges.NewUsersRepository(db)
 	orderRepo := postrges.NewOrdersRepository(db)
+	balanceRepo := postrges.NewBalanceRepository(db)
 
 	userService := service.NewUserService(userRepo)
 	orderService := service.NewOrderService(orderRepo)
+	balanceService := service.NewBalanceService(balanceRepo)
 
-	handler := handler.NewHandler(userService, orderService, logger, jwt)
+	handler := handler.NewHandler(userService, orderService, balanceService, logger, jwt)
 
 	return http.ListenAndServe(cfg.RunAddr, handler.Route(logger, jwt))
 }

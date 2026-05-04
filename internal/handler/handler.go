@@ -17,19 +17,21 @@ import (
 
 // HTTP хендлер для приложения
 type Handler struct {
-	userService  *service.UserService
-	orderService *service.OrderService
-	logger       *logger.Logger
-	jwt          *auth.JWT
+	userService    *service.UserService
+	orderService   *service.OrderService
+	balanceService *service.BalanceService
+	logger         *logger.Logger
+	jwt            *auth.JWT
 }
 
 // констуктор для HTTP хендлера
-func NewHandler(u *service.UserService, o *service.OrderService, l *logger.Logger, j *auth.JWT) *Handler {
+func NewHandler(u *service.UserService, o *service.OrderService, b *service.BalanceService, l *logger.Logger, j *auth.JWT) *Handler {
 	return &Handler{
-		userService:  u,
-		orderService: o,
-		logger:       l,
-		jwt:          j,
+		userService:    u,
+		orderService:   o,
+		balanceService: b,
+		logger:         l,
+		jwt:            j,
 	}
 }
 
@@ -53,7 +55,7 @@ func (h *Handler) Register() http.HandlerFunc {
 			return
 		}
 
-		user, err := h.userService.Register(req.Login, req.Password)
+		user, err := h.userService.Register(r.Context(), req.Login, req.Password)
 		if err != nil {
 			switch err {
 			case repository.ErrUserExists:
@@ -109,7 +111,7 @@ func (h *Handler) Login() http.HandlerFunc {
 			return
 		}
 
-		user, err := h.userService.Login(req.Login, req.Password)
+		user, err := h.userService.Login(r.Context(), req.Login, req.Password)
 		if err != nil {
 			switch err {
 			case service.ErrInvalidCredentials:
@@ -174,7 +176,7 @@ func (h *Handler) CreateOrder() http.HandlerFunc {
 
 		// TBD: проверить номер заказа по Алгоритму Луна
 
-		err = h.orderService.Create(orderNumber, userId)
+		err = h.orderService.Create(r.Context(), orderNumber, userId)
 		if err != nil {
 			switch err {
 			case repository.ErrOrderExists:
@@ -199,5 +201,51 @@ func (h *Handler) CreateOrder() http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusAccepted)
+	}
+}
+
+func (h *Handler) CreateWithdraw() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userIDStr, ok := middleware.GetUserID(r.Context())
+		if !ok {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		userId, err := uuid.Parse(userIDStr)
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		var req models.WithdrawRequest
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid request", http.StatusBadRequest)
+			return
+		}
+
+		// TBD: проверить номер заказа по Алгоритму Луна
+
+		err = h.balanceService.CreateWithdraw(r.Context(), req.Order, userId, req.Sum)
+		if err != nil {
+			switch err {
+			case repository.ErrInsufficientFunds:
+				http.Error(w,
+					http.StatusText(http.StatusPaymentRequired),
+					http.StatusPaymentRequired,
+				)
+			default:
+				h.logger.Error("failed to create withdraw", "error", err)
+
+				http.Error(w,
+					http.StatusText(http.StatusInternalServerError),
+					http.StatusInternalServerError,
+				)
+			}
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
 	}
 }

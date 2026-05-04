@@ -21,13 +21,13 @@ func NewOrdersRepository(db *sql.DB) *OrdersRepository {
 	return &OrdersRepository{db: db}
 }
 
-func (r *OrdersRepository) Create(number string, userId uuid.UUID) (*models.Order, error) {
+func (r *OrdersRepository) Create(ctx context.Context, number string, userId uuid.UUID) (*models.Order, error) {
 	query := `INSERT INTO orders (id, number, user_id)
 		VALUES ($1, $2, $3)
 		RETURNING id, number, user_id, status, accrual, uploaded_at
 	`
 
-	row := r.db.QueryRowContext(context.Background(), query, uuid.New(), number, userId)
+	row := r.db.QueryRowContext(ctx, query, uuid.New(), number, userId)
 
 	var order models.Order
 	err := row.Scan(
@@ -47,7 +47,7 @@ func (r *OrdersRepository) Create(number string, userId uuid.UUID) (*models.Orde
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" {
 				// получить существующий заказ по номеру
-				existingOrder, error := r.getOrderByNumber(number)
+				existingOrder, error := r.getOrderByNumber(ctx, number)
 				if error != nil {
 					return nil, error
 				}
@@ -60,14 +60,14 @@ func (r *OrdersRepository) Create(number string, userId uuid.UUID) (*models.Orde
 	return &order, nil
 }
 
-func (r *OrdersRepository) getOrderByNumber(number string) (*models.Order, error) {
-	query := `
-		SELECT id, number, user_id, status, accrual, uploaded_at
+func (r *OrdersRepository) getOrderByNumber(ctx context.Context, number string) (*models.Order, error) {
+	query := `SELECT id, number, user_id, status, accrual, uploaded_at
 		FROM orders
-		WHERE number = $1`
+		WHERE number = $1
+	`
 
 	var order models.Order
-	row := r.db.QueryRowContext(context.Background(), query, number)
+	row := r.db.QueryRowContext(ctx, query, number)
 
 	err := row.Scan(
 		&order.ID,
