@@ -35,6 +35,6 @@ var (
 	ErrOrderExists   = errors.New("order number already exists")
 	ErrOrderNotFound = errors.New("order not found")
 
-	// ошибки репозитория с операциями
+	// ошибки репозитория с операциями баланса
 	ErrInsufficientFunds = errors.New("insufficient funds")
 )

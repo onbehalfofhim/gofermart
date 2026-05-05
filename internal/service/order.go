@@ -22,6 +22,7 @@ func NewOrderService(r repository.OrderRepo) *OrderService {
 	}
 }
 
+// создание заказа с потенциальным начислением баллов лояльности
 func (s *OrderService) Create(ctx context.Context, number string, userId uuid.UUID) error {
 	// Пытаемся создать заказ
 	order, err := s.repo.Create(ctx, number, userId)

@@ -20,11 +20,12 @@ func NewBalanceService(r repository.BalanceRepo) *BalanceService {
 	}
 }
 
-// создаем операцию с балансом (начисление или списание)
+// создаем операцию с балансом (начисление)
 func (s *BalanceService) CreateAccrual(ctx context.Context, orderNumber string, userId uuid.UUID, accrual float64) error {
 	return s.repo.CreateAccrual(ctx, orderNumber, userId, accrual)
 }
 
+// создаем операцию с балансом (списание)
 func (s *BalanceService) CreateWithdraw(ctx context.Context, orderNumber string, userId uuid.UUID, sum float64) error {
 	return s.repo.CreateWithdraw(ctx, orderNumber, userId, sum)
 }

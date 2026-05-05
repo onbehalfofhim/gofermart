@@ -13,6 +13,7 @@ import (
 	"github.com/onbehalfofhim/gofermart/internal/models"
 	"github.com/onbehalfofhim/gofermart/internal/repository"
 	"github.com/onbehalfofhim/gofermart/internal/service"
+	"github.com/onbehalfofhim/gofermart/pkg/utils"
 )
 
 // HTTP хендлер для приложения
@@ -147,6 +148,7 @@ func (h *Handler) Login() http.HandlerFunc {
 	}
 }
 
+// обработчик регистрации заказа в системе лояльности
 func (h *Handler) CreateOrder() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userIDStr, ok := middleware.GetUserID(r.Context())
@@ -174,7 +176,12 @@ func (h *Handler) CreateOrder() http.HandlerFunc {
 			return
 		}
 
-		// TBD: проверить номер заказа по Алгоритму Луна
+		if !utils.ValidateLuhn(orderNumber) {
+			http.Error(w,
+				http.StatusText(http.StatusUnprocessableEntity),
+				http.StatusUnprocessableEntity,
+			)
+		}
 
 		err = h.orderService.Create(r.Context(), orderNumber, userId)
 		if err != nil {
@@ -204,6 +211,7 @@ func (h *Handler) CreateOrder() http.HandlerFunc {
 	}
 }
 
+// обработчик регистрации списания баллов
 func (h *Handler) CreateWithdraw() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userIDStr, ok := middleware.GetUserID(r.Context())
@@ -225,7 +233,12 @@ func (h *Handler) CreateWithdraw() http.HandlerFunc {
 			return
 		}
 
-		// TBD: проверить номер заказа по Алгоритму Луна
+		if !utils.ValidateLuhn(req.Order) {
+			http.Error(w,
+				http.StatusText(http.StatusUnprocessableEntity),
+				http.StatusUnprocessableEntity,
+			)
+		}
 
 		err = h.balanceService.CreateWithdraw(r.Context(), req.Order, userId, req.Sum)
 		if err != nil {

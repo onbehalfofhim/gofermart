@@ -20,6 +20,7 @@ func NewBalanceRepository(db *sql.DB) *BalanceRepository {
 	return &BalanceRepository{db: db}
 }
 
+// создание операции начисления баллов
 func (r *BalanceRepository) CreateAccrual(ctx context.Context, orderNumber string, userId uuid.UUID, amount float64) error {
 	// начинаем транзакцию
 	tx, err := r.db.BeginTx(ctx, nil)
@@ -61,6 +62,7 @@ func (r *BalanceRepository) CreateAccrual(ctx context.Context, orderNumber strin
 	return tx.Commit()
 }
 
+// создание операции списания баллов
 func (r *BalanceRepository) CreateWithdraw(ctx context.Context, orderNumber string, userId uuid.UUID, amount float64) error {
 	// начинаем транзакцию
 	tx, err := r.db.BeginTx(ctx, nil)
@@ -111,6 +113,7 @@ func (r *BalanceRepository) CreateWithdraw(ctx context.Context, orderNumber stri
 	return tx.Commit()
 }
 
+// получение баланса и суммы списаний пользователя
 func (r *BalanceRepository) GetBalanceWithWithdrawn(ctx context.Context, userId uuid.UUID) (float64, float64, error) {
 	query := `SELECT 
             u.balance,

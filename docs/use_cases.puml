@@ -1,10 +1,10 @@
-@startuml
+"@startuml Business Cases"
 autonumber "<b>[00]"
 
 participant user as u
 participant gofermart_onlineshop as shop
 participant gofermart as gm
-participant accural as acc
+participant accrual as acc
 
 activate gm
 
@@ -26,13 +26,20 @@ end group
     u->gm: POST /api/user/orders
     gm->gm: валидация JWT-токена
     gm->gm: получить номер заказа из запроса
-    gm->gm: <color red> проверить номер заказа по алгоритму Луна
+    gm->gm: проверить номер заказа по алгоритму Луна
     gm->gm: Связть номер заказа и пользователя
     gm->acc: <color red> GET /api/orders/{number}
     acc-->gm: статус расчета заказа
-    opt #lightpink баллы рассчитаны
-        gm->gm: начислить баллы на счет пользователя
-        gm->gm: добавить операцию
+
+    group #lightpink async part
+        gm->acc: <color red> GET /api/orders/{number}
+        acc-->gm: статус расчета заказа
+        
+        gm->gm: обновить статус заказа
+        alt status = PROCESSED
+            gm->gm: начислить баллы на счет пользователя
+            gm->gm: добавить операцию
+        end
     end
     gm-->u:
 == Получение списка загруженных номеров заказов ==
@@ -47,9 +54,9 @@ end group
 == Запрос на списание средств ==
     u->gm: POST /api/user/balance/withdraw
     gm->gm: валидация JWT-токена
-    gm->gm: списать баллы со счета пользователя
-    gm->gm: <color red> проверить номер заказа по алгоритму Луна
-    gm->gm: добавить операцию
+    gm->gm: списать баллы с баланса
+    gm->gm: проверить номер заказа по алгоритму Луна
+    gm->gm: сохранить операцию баланса
     gm-->u: ОК (если было достаточно средств)
 
 == Получение информации о выводе средств ==

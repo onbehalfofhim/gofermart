@@ -21,6 +21,7 @@ func NewOrdersRepository(db *sql.DB) *OrdersRepository {
 	return &OrdersRepository{db: db}
 }
 
+// записть заказа в БД
 func (r *OrdersRepository) Create(ctx context.Context, number string, userId uuid.UUID) (*models.Order, error) {
 	query := `INSERT INTO orders (id, number, user_id)
 		VALUES ($1, $2, $3)
@@ -60,6 +61,7 @@ func (r *OrdersRepository) Create(ctx context.Context, number string, userId uui
 	return &order, nil
 }
 
+// получение информации о заказе по его номеру
 func (r *OrdersRepository) getOrderByNumber(ctx context.Context, number string) (*models.Order, error) {
 	query := `SELECT id, number, user_id, status, accrual, uploaded_at
 		FROM orders

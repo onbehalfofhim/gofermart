@@ -14,6 +14,7 @@ type JWTValidator interface {
 	ValidateToken(tokenString string) (string, error)
 }
 
+// middleware для валидации токена в запросе
 func Auth(jwtValidator JWTValidator) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -47,6 +48,7 @@ func Auth(jwtValidator JWTValidator) func(http.Handler) http.Handler {
 	}
 }
 
+// получение идентификатора пользователя из токена
 func GetUserID(ctx context.Context) (string, bool) {
 	id, ok := ctx.Value(UserIDKey).(string)
 	return id, ok
