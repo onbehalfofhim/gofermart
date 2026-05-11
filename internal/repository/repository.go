@@ -20,6 +20,7 @@ type OrderRepo interface {
 	UpdateStatus(ctx context.Context, number string, status string, accrual *float64) error
 
 	GetOrdersForProcessing(ctx context.Context) ([]models.Order, error)
+	GetOrdersByUserId(ctx context.Context, userId uuid.UUID) ([]models.Order, error)
 }
 
 // интерфейс хранилища пользователей приложения

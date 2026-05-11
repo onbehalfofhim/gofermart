@@ -19,7 +19,10 @@ func (h *Handler) Route(logger *logger.Logger, jwtManager middleware.JWTValidato
 
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.Auth(jwtManager))
+
 			r.Post("/orders", h.CreateOrder())
+			r.Get("/orders", h.GetOrders())
+
 			r.Post("/balance/withdraw", h.CreateWithdraw())
 		})
 	})

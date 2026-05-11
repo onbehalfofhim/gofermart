@@ -154,14 +154,16 @@ func (r *OrdersRepository) UpdateStatus(ctx context.Context, number string, stat
 		query = `UPDATE orders
 			SET
 				status = $1,
-				accrual = $2
+				accrual = $2,
+				updated_at = NOW()
 			WHERE number = $3
 		`
 		args = []any{orderStatus, *accrual, number}
 	} else {
 		query = `UPDATE orders
 			SET
-				status = $1
+				status = $1,
+				updated_at = NOW()
 			WHERE number = $2
 		`
 		args = []any{orderStatus, number}
@@ -182,4 +184,39 @@ func (r *OrdersRepository) UpdateStatus(ctx context.Context, number string, stat
 	}
 
 	return nil
+}
+
+// получение списка заказов пользователя
+func (r *OrdersRepository) GetOrdersByUserId(ctx context.Context, userId uuid.UUID) ([]models.Order, error) {
+	query := `SELECT id, number, user_id, status, accrual, uploaded_at
+		FROM orders
+		WHERE user_id = $1
+		ORDER BY uploaded_at ASC
+	`
+
+	rows, err := r.db.Query(query, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var orders []models.Order
+	for rows.Next() {
+		var order models.Order
+		rows.Scan(
+			&order.ID,
+			&order.Number,
+			&order.UserID,
+			&order.Status,
+			&order.Accrual,
+			&order.UploadedAt,
+		)
+		orders = append(orders, order)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return orders, nil
 }
