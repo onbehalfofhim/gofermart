@@ -1,0 +1,58 @@
+@startuml
+
+actor OS
+
+participant "main()" as Main
+participant "run()" as Run
+participant "root context" as Ctx
+participant "HTTP Server" as HTTP
+participant "AccrualProcessor" as Processor
+participant "Workers" as Workers
+participant "PostgreSQL" as DB
+
+== Application startup ==
+Main -> Ctx : signal.NotifyContext()
+Main -> Run : run(ctx, cfg, logger)
+Run -> DB : sql.Open()
+Run -> DB : ApplyMigrations()
+Run -> Processor : NewAccrualProcessor()
+Run -> Processor : go Start(ctx)
+Processor -> Workers : start workers
+Run -> HTTP : create http.Server
+Run -> HTTP : go ListenAndServe()
+HTTP --> Run : serverErr channel
+
+== Normal work ==
+HTTP --> HTTP : handle requests
+Workers --> Workers : process accrual jobs
+
+== Shutdown signal ==
+OS -> Ctx : SIGINT / SIGTERM
+Ctx -> Run : ctx.Done()
+Run -> Run : context.WithTimeout(15s)
+Run -> HTTP : Shutdown(shutdownCtx)
+
+== HTTP graceful shutdown ==
+HTTP -> HTTP : stop accepting new connections
+HTTP -> HTTP : wait active requests
+HTTP --> Run : shutdown complete
+
+== Processor shutdown ==
+Ctx -> Processor : ctx.Done()
+Processor -> Processor : stop scheduler
+Processor -> Workers : close(jobs)
+
+loop workers
+    Workers -> Workers : finish current job
+    Workers -> Workers : wg.Done()
+    Workers --> Processor : worker stopped
+end
+
+Processor --> Processor : all workers stopped
+
+== Cleanup ==
+Run -> DB : Close()
+Run --> Main : nil
+Main --> OS : process exit
+
+@enduml

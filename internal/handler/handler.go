@@ -181,6 +181,7 @@ func (h *Handler) CreateOrder() http.HandlerFunc {
 				http.StatusText(http.StatusUnprocessableEntity),
 				http.StatusUnprocessableEntity,
 			)
+			return
 		}
 
 		err = h.orderService.Create(r.Context(), orderNumber, userId)
@@ -238,6 +239,7 @@ func (h *Handler) CreateWithdraw() http.HandlerFunc {
 				http.StatusText(http.StatusUnprocessableEntity),
 				http.StatusUnprocessableEntity,
 			)
+			return
 		}
 
 		err = h.balanceService.CreateWithdraw(r.Context(), req.Order, userId, req.Sum)

@@ -28,11 +28,11 @@ end group
     gm->gm: получить номер заказа из запроса
     gm->gm: проверить номер заказа по алгоритму Луна
     gm->gm: Связть номер заказа и пользователя
-    gm->acc: <color red> GET /api/orders/{number}
+    gm->acc: GET /api/orders/{number}
     acc-->gm: статус расчета заказа
 
-    group #lightpink async part
-        gm->acc: <color red> GET /api/orders/{number}
+    group async part
+        gm->acc: GET /api/orders/{number}
         acc-->gm: статус расчета заказа
         
         gm->gm: обновить статус заказа

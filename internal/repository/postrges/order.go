@@ -89,3 +89,97 @@ func (r *OrdersRepository) getOrderByNumber(ctx context.Context, number string) 
 
 	return &order, nil
 }
+
+func (r *OrdersRepository) GetOrdersForProcessing(ctx context.Context) ([]models.Order, error) {
+	query := `SELECT id, number, user_id, status, accrual, uploaded_at, updated_at
+		FROM orders
+		WHERE status IN ($1, $2)
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, models.OrderStatusNew, models.OrderStatusProcessing)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var orders []models.Order
+	for rows.Next() {
+		var order models.Order
+		err := rows.Scan(
+			&order.ID,
+			&order.Number,
+			&order.UserID,
+			&order.Status,
+			&order.Accrual,
+			&order.UploadedAt,
+			&order.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		orders = append(orders, order)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
+
+func (r *OrdersRepository) MapStatus(status string) models.OrderStatus {
+	switch status {
+	case "REGISTERED":
+		return models.OrderStatusProcessing
+	case "PROCESSING":
+		return models.OrderStatusProcessing
+	case "INVALID":
+		return models.OrderStatusInvalid
+	case "PROCESSED":
+		return models.OrderStatusProcessed
+	default:
+		return models.OrderStatusProcessing
+	}
+}
+
+func (r *OrdersRepository) UpdateStatus(ctx context.Context, number string, status string, accrual *float64) error {
+	var (
+		query string
+		args  []any
+	)
+
+	orderStatus := r.MapStatus(status)
+
+	if accrual != nil {
+		query = `UPDATE orders
+			SET
+				status = $1,
+				accrual = $2
+			WHERE number = $3
+		`
+		args = []any{orderStatus, *accrual, number}
+	} else {
+		query = `UPDATE orders
+			SET
+				status = $1
+			WHERE number = $2
+		`
+		args = []any{orderStatus, number}
+	}
+
+	result, err := r.db.ExecContext(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return repository.ErrOrderNotFound
+	}
+
+	return nil
+}

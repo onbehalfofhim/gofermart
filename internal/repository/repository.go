@@ -17,6 +17,9 @@ type UserRepo interface {
 // интерфейс хранилища пользователей приложения
 type OrderRepo interface {
 	Create(ctx context.Context, number string, userId uuid.UUID) (*models.Order, error)
+	UpdateStatus(ctx context.Context, number string, status string, accrual *float64) error
+
+	GetOrdersForProcessing(ctx context.Context) ([]models.Order, error)
 }
 
 // интерфейс хранилища пользователей приложения

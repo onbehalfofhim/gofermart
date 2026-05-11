@@ -5,10 +5,12 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/onbehalfofhim/gofermart/internal/models"
 	"github.com/onbehalfofhim/gofermart/internal/repository"
 )
 
 var ErrOrderBelongsToOtherUser = errors.New("order belongs to another user")
+var ErrUnknownOrderDtatus = errors.New("order status is not matched")
 
 // сервис работы с заказом
 type OrderService struct {
@@ -40,4 +42,12 @@ func (s *OrderService) Create(ctx context.Context, number string, userId uuid.UU
 	}
 
 	return nil
+}
+
+func (s *OrderService) GetOrdersForProcessing(ctx context.Context) ([]models.Order, error) {
+	return s.repo.GetOrdersForProcessing(ctx)
+}
+
+func (s *OrderService) UpdateStatus(ctx context.Context, orderNumber string, status string, accrual *float64) error {
+	return s.repo.UpdateStatus(ctx, orderNumber, status, accrual)
 }

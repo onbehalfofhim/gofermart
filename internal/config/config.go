@@ -10,9 +10,9 @@ import (
 
 // структура для хранения аргументов командной строки
 type Config struct {
-	RunAddr     string `env:"RUN_ADDRESS" env-default:":8080"`
+	RunAddr     string `env:"RUN_ADDRESS" env-default:":8081"`
 	DatabaseURI string `env:"DATABASE_URI" env-default:"postgresql://user:password@localhost:5437/loyalty?sslmode=disable"`
-	AccuralAddr string `env:"ACCRUAL_SYSTEM_ADDRESS" env-default:"http://localhost:8081"`
+	AccuralAddr string `env:"ACCRUAL_SYSTEM_ADDRESS" env-default:"http://localhost:8080"`
 	JWTSecret   string `env:"JWT_SECRET"`
 }
 

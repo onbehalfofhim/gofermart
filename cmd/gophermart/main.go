@@ -1,13 +1,20 @@
 package main
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/onbehalfofhim/gofermart/internal/auth"
+	"github.com/onbehalfofhim/gofermart/internal/client"
 	"github.com/onbehalfofhim/gofermart/internal/config"
 	"github.com/onbehalfofhim/gofermart/internal/handler"
 	"github.com/onbehalfofhim/gofermart/internal/logger"
@@ -17,6 +24,10 @@ import (
 )
 
 func main() {
+	// root ctx приложения
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	// получение параметров конфигурации приложения
 	cfg, err := config.ParseFlags()
 	logger := logger.NewLogger()
@@ -25,14 +36,12 @@ func main() {
 		logger.Error("Error in parse flags and variables", "error", err)
 	}
 
-	logger.Info("server run")
-
-	if err := run(cfg, logger); err != nil {
+	if err := run(ctx, cfg, logger); err != nil {
 		logger.Error("Error in run server", "error", err)
 	}
 }
 
-func run(cfg config.Config, logger *logger.Logger) error {
+func run(ctx context.Context, cfg config.Config, logger *logger.Logger) error {
 	// передаем в приложение параметры JWT
 	jwt := auth.NewJWT(cfg.JWTSecret)
 
@@ -50,15 +59,57 @@ func run(cfg config.Config, logger *logger.Logger) error {
 		return fmt.Errorf("can't apply migrations: %w", err)
 	}
 
+	// repositories
 	userRepo := postrges.NewUsersRepository(db)
 	orderRepo := postrges.NewOrdersRepository(db)
 	balanceRepo := postrges.NewBalanceRepository(db)
 
+	// services
 	userService := service.NewUserService(userRepo)
 	orderService := service.NewOrderService(orderRepo)
 	balanceService := service.NewBalanceService(balanceRepo)
 
-	handler := handler.NewHandler(userService, orderService, balanceService, logger, jwt)
+	// external client
+	accrualClient := client.NewAccrualClient(cfg.AccuralAddr)
 
-	return http.ListenAndServe(cfg.RunAddr, handler.Route(logger, jwt))
+	// processor
+	accrualProcessor := service.NewAccrualProcessor(orderService, balanceService, accrualClient, logger)
+
+	// стартуем processor
+	go accrualProcessor.Start(ctx)
+
+	handler := handler.NewHandler(userService, orderService, balanceService, logger, jwt)
+	server := &http.Server{
+		Addr:    cfg.RunAddr,
+		Handler: handler.Route(logger, jwt),
+	}
+
+	// server errors
+	serverErr := make(chan error, 1)
+	go func() {
+		logger.Info("starting server", "addr", cfg.RunAddr)
+		serverErr <- server.ListenAndServe()
+	}()
+
+	select {
+	case <-ctx.Done():
+		logger.Info("shutdown signal received")
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+
+		err := server.Shutdown(shutdownCtx)
+		if err != nil {
+			return fmt.Errorf("can't shutdown server: %w", err)
+		}
+
+		logger.Info("server stopped")
+		return nil
+
+	case err := <-serverErr:
+		if errors.Is(err, http.ErrServerClosed) {
+			return nil
+		}
+
+		return fmt.Errorf("server error: %w", err)
+	}
 }
