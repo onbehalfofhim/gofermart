@@ -43,13 +43,17 @@ end group
     end
     gm-->u:
 == Получение списка загруженных номеров заказов ==
-    u->gm: <color red> GET /api/user/orders
+    u->gm: GET /api/user/orders
+    gm->gm: валидация JWT-токена
     gm->gm: сбор информации о загруженных заказах
     gm-->u: список заказов
 
 == Получение текущего баланса пользователя ==
-    u->gm: <color red> GET /api/user/balance
-    gm-->u: баланс пользовтеля
+    u->gm: GET /api/user/balance
+    gm->gm: валидация JWT-токена
+    gm->gm: подсчет суммы списаний
+    gm->gm: получение текущего баланса
+    gm-->u: баланс пользовтеля и сумма списаний
 
 == Запрос на списание средств ==
     u->gm: POST /api/user/balance/withdraw
@@ -60,7 +64,8 @@ end group
     gm-->u: ОК (если было достаточно средств)
 
 == Получение информации о выводе средств ==
-    u->gm: <color red> GET /api/user/withdrawals
+    u->gm: GET /api/user/withdrawals
+    gm->gm: валидация JWT-токена
     gm->gm: сбор информации о списаниях
     gm-->u: списания пользователя
 

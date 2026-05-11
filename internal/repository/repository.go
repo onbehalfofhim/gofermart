@@ -28,6 +28,7 @@ type BalanceRepo interface {
 	CreateAccrual(ctx context.Context, orderNumber string, userId uuid.UUID, amount float64) error
 	CreateWithdraw(ctx context.Context, orderNumber string, userId uuid.UUID, amount float64) error
 	GetBalanceWithWithdrawn(ctx context.Context, userId uuid.UUID) (float64, float64, error)
+	GetWithdrawalsByUserId(ctx context.Context, userId uuid.UUID) ([]models.BalanceOperation, error)
 }
 
 var (

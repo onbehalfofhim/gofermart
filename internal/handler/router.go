@@ -23,7 +23,10 @@ func (h *Handler) Route(logger *logger.Logger, jwtManager middleware.JWTValidato
 			r.Post("/orders", h.CreateOrder())
 			r.Get("/orders", h.GetOrders())
 
+			r.Get("/balance", h.GetBalance())
+
 			r.Post("/balance/withdraw", h.CreateWithdraw())
+			r.Get("/withdrawals", h.GetWithdrawals())
 		})
 	})
 

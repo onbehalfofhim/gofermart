@@ -194,7 +194,7 @@ func (r *OrdersRepository) GetOrdersByUserId(ctx context.Context, userId uuid.UU
 		ORDER BY uploaded_at ASC
 	`
 
-	rows, err := r.db.Query(query, userId)
+	rows, err := r.db.QueryContext(ctx, query, userId)
 	if err != nil {
 		return nil, err
 	}

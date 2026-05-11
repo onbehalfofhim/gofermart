@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	// "github.com/onbehalfofhim/gofermart/internal/models"
+	"github.com/onbehalfofhim/gofermart/internal/models"
 	"github.com/onbehalfofhim/gofermart/internal/repository"
 )
 
@@ -28,4 +28,37 @@ func (s *BalanceService) CreateAccrual(ctx context.Context, orderNumber string, 
 // создаем операцию с балансом (списание)
 func (s *BalanceService) CreateWithdraw(ctx context.Context, orderNumber string, userId uuid.UUID, sum float64) error {
 	return s.repo.CreateWithdraw(ctx, orderNumber, userId, sum)
+}
+
+func (s *BalanceService) GetBalanceWithWithdrawn(ctx context.Context, userId uuid.UUID) (models.BalanceResponse, error) {
+	balance, withdrawn, err := s.repo.GetBalanceWithWithdrawn(ctx, userId)
+	if err != nil {
+		return models.BalanceResponse{}, err
+	}
+
+	response := models.BalanceResponse{
+		Current:   balance,
+		Withdrawn: withdrawn,
+	}
+
+	return response, nil
+}
+
+func (s *BalanceService) GetWithdrawalsByUserId(ctx context.Context, userId uuid.UUID) ([]models.WithdrawalResponse, error) {
+	operations, err := s.repo.GetWithdrawalsByUserId(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Преобразуем в response формат
+	responses := make([]models.WithdrawalResponse, len(operations))
+	for i, withdraw := range operations {
+		responses[i] = models.WithdrawalResponse{
+			Order:       withdraw.OrderNumber,
+			Sum:         withdraw.Amount,
+			ProcessedAt: withdraw.ProcessedAt.Format("2006-01-02T15:04:05Z07:00"), // RFC3339
+		}
+	}
+
+	return responses, nil
 }

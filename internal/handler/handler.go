@@ -307,3 +307,82 @@ func (h *Handler) GetOrders() http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 	}
 }
+
+func (h *Handler) GetBalance() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userIDStr, ok := middleware.GetUserID(r.Context())
+		if !ok {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		userId, err := uuid.Parse(userIDStr)
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+
+		resp, err := h.balanceService.GetBalanceWithWithdrawn(r.Context(), userId)
+		if err != nil {
+			h.logger.Error("failed to get balance", "error", err)
+
+			http.Error(w,
+				http.StatusText(http.StatusInternalServerError),
+				http.StatusInternalServerError,
+			)
+			return
+		}
+
+		enc := json.NewEncoder(w)
+		if err := enc.Encode(resp); err != nil {
+			http.Error(w, "cannot encode response body", http.StatusInternalServerError)
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func (h *Handler) GetWithdrawals() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userIDStr, ok := middleware.GetUserID(r.Context())
+		if !ok {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		userId, err := uuid.Parse(userIDStr)
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+
+		resp, err := h.balanceService.GetWithdrawalsByUserId(r.Context(), userId)
+		if err != nil {
+			h.logger.Error("failed to get withdrawals", "error", err)
+
+			http.Error(w,
+				http.StatusText(http.StatusInternalServerError),
+				http.StatusInternalServerError,
+			)
+			return
+		}
+
+		if len(resp) == 0 {
+			http.Error(w,
+				http.StatusText(http.StatusNoContent),
+				http.StatusNoContent,
+			)
+		}
+
+		enc := json.NewEncoder(w)
+		if err := enc.Encode(resp); err != nil {
+			http.Error(w, "cannot encode response body", http.StatusInternalServerError)
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}
+}

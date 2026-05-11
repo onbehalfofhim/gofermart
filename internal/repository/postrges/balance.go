@@ -140,3 +140,39 @@ func (r *BalanceRepository) GetBalanceWithWithdrawn(ctx context.Context, userId 
 
 	return balance, withdrawn, nil
 }
+
+// получение информации о выводе средств пользователя
+func (r *BalanceRepository) GetWithdrawalsByUserId(ctx context.Context, userId uuid.UUID) ([]models.BalanceOperation, error) {
+	query := `SELECT id, order_number, user_id, operation_type, amount, processed_at, created_at
+		FROM balance_operations
+		WHERE user_id = $1 AND operation_type = 'WITHDRAW'
+		ORDER BY processed_at ASC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var operations []models.BalanceOperation
+	for rows.Next() {
+		var operation models.BalanceOperation
+		rows.Scan(
+			&operation.ID,
+			&operation.OrderNumber,
+			&operation.UserID,
+			&operation.OperationType,
+			&operation.Amount,
+			&operation.ProcessedAt,
+			&operation.CreatedAt,
+		)
+		operations = append(operations, operation)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return operations, nil
+}
