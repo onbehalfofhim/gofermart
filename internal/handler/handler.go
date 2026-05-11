@@ -87,7 +87,7 @@ func (h *Handler) Register() http.HandlerFunc {
 			)
 		}
 
-		w.Header().Set("Authorization", token)
+		w.Header().Set("Authorization", "Bearer "+token)
 		w.WriteHeader(http.StatusOK)
 	}
 }
@@ -143,7 +143,7 @@ func (h *Handler) Login() http.HandlerFunc {
 			)
 		}
 
-		w.Header().Set("Authorization", token)
+		w.Header().Set("Authorization", "Bearer "+token)
 		w.WriteHeader(http.StatusOK)
 	}
 }
@@ -265,8 +265,11 @@ func (h *Handler) CreateWithdraw() http.HandlerFunc {
 	}
 }
 
+// обработчик получения списка заказов клиента
 func (h *Handler) GetOrders() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
 		userIDStr, ok := middleware.GetUserID(r.Context())
 		if !ok {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
@@ -278,8 +281,6 @@ func (h *Handler) GetOrders() http.HandlerFunc {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
-
-		w.Header().Set("Content-Type", "application/json")
 
 		resp, err := h.orderService.GetOrdersByUserId(r.Context(), userId)
 		if err != nil {
@@ -297,6 +298,7 @@ func (h *Handler) GetOrders() http.HandlerFunc {
 				http.StatusText(http.StatusNoContent),
 				http.StatusNoContent,
 			)
+			return
 		}
 
 		enc := json.NewEncoder(w)
@@ -308,8 +310,11 @@ func (h *Handler) GetOrders() http.HandlerFunc {
 	}
 }
 
+// обработчик получения баланса клиента и суммы его списаний
 func (h *Handler) GetBalance() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
 		userIDStr, ok := middleware.GetUserID(r.Context())
 		if !ok {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
@@ -321,8 +326,6 @@ func (h *Handler) GetBalance() http.HandlerFunc {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
-
-		w.Header().Set("Content-Type", "application/json")
 
 		resp, err := h.balanceService.GetBalanceWithWithdrawn(r.Context(), userId)
 		if err != nil {
@@ -344,8 +347,11 @@ func (h *Handler) GetBalance() http.HandlerFunc {
 	}
 }
 
+// обработчик получения информации о выводе средств
 func (h *Handler) GetWithdrawals() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
 		userIDStr, ok := middleware.GetUserID(r.Context())
 		if !ok {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
@@ -357,8 +363,6 @@ func (h *Handler) GetWithdrawals() http.HandlerFunc {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
-
-		w.Header().Set("Content-Type", "application/json")
 
 		resp, err := h.balanceService.GetWithdrawalsByUserId(r.Context(), userId)
 		if err != nil {
@@ -376,6 +380,7 @@ func (h *Handler) GetWithdrawals() http.HandlerFunc {
 				http.StatusText(http.StatusNoContent),
 				http.StatusNoContent,
 			)
+			return
 		}
 
 		enc := json.NewEncoder(w)

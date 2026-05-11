@@ -44,14 +44,17 @@ func (s *OrderService) Create(ctx context.Context, number string, userId uuid.UU
 	return nil
 }
 
+// получение списка заказов на обработку
 func (s *OrderService) GetOrdersForProcessing(ctx context.Context) ([]models.Order, error) {
 	return s.repo.GetOrdersForProcessing(ctx)
 }
 
+// обновление статуса заказа в системе
 func (s *OrderService) UpdateStatus(ctx context.Context, orderNumber string, status string, accrual *float64) error {
 	return s.repo.UpdateStatus(ctx, orderNumber, status, accrual)
 }
 
+// получение списка закзаов пользователя
 func (s *OrderService) GetOrdersByUserId(ctx context.Context, userId uuid.UUID) ([]models.OrderResponse, error) {
 	orders, err := s.repo.GetOrdersByUserId(ctx, userId)
 	if err != nil {

@@ -30,6 +30,7 @@ func (s *BalanceService) CreateWithdraw(ctx context.Context, orderNumber string,
 	return s.repo.CreateWithdraw(ctx, orderNumber, userId, sum)
 }
 
+// запрашиваем баланс клиента
 func (s *BalanceService) GetBalanceWithWithdrawn(ctx context.Context, userId uuid.UUID) (models.BalanceResponse, error) {
 	balance, withdrawn, err := s.repo.GetBalanceWithWithdrawn(ctx, userId)
 	if err != nil {
@@ -44,6 +45,7 @@ func (s *BalanceService) GetBalanceWithWithdrawn(ctx context.Context, userId uui
 	return response, nil
 }
 
+// запрашиваем информацию о выводе средств клиента
 func (s *BalanceService) GetWithdrawalsByUserId(ctx context.Context, userId uuid.UUID) ([]models.WithdrawalResponse, error) {
 	operations, err := s.repo.GetWithdrawalsByUserId(ctx, userId)
 	if err != nil {

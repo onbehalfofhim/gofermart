@@ -90,6 +90,7 @@ func (r *OrdersRepository) getOrderByNumber(ctx context.Context, number string) 
 	return &order, nil
 }
 
+// получение заказов, находящихся не в коненом статусе статусной модели
 func (r *OrdersRepository) GetOrdersForProcessing(ctx context.Context) ([]models.Order, error) {
 	query := `SELECT id, number, user_id, status, accrual, uploaded_at, updated_at
 		FROM orders
@@ -127,6 +128,7 @@ func (r *OrdersRepository) GetOrdersForProcessing(ctx context.Context) ([]models
 	return orders, nil
 }
 
+// маппинг внешних статусов на статусную модель системы
 func (r *OrdersRepository) MapStatus(status string) models.OrderStatus {
 	switch status {
 	case "REGISTERED":
@@ -142,6 +144,7 @@ func (r *OrdersRepository) MapStatus(status string) models.OrderStatus {
 	}
 }
 
+// обновление статуса заказа
 func (r *OrdersRepository) UpdateStatus(ctx context.Context, number string, status string, accrual *float64) error {
 	var (
 		query string

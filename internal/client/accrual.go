@@ -9,11 +9,13 @@ import (
 	"time"
 )
 
+// структура клиента для работы с внешней системой
 type AccrualClient struct {
 	baseURL string
 	client  *http.Client
 }
 
+// конструктор для создания клиента
 func NewAccrualClient(addr string) *AccrualClient {
 	return &AccrualClient{
 		baseURL: addr,
@@ -23,12 +25,14 @@ func NewAccrualClient(addr string) *AccrualClient {
 	}
 }
 
+// модель ответа от внешней системы
 type AccrualResponse struct {
 	Order   string  `json:"order"`
 	Status  string  `json:"status"`
 	Accrual float64 `json:"accrual"`
 }
 
+// взаимодействие с системой расчёта начислений баллов лояльности
 func (c *AccrualClient) GetOrder(ctx context.Context, orderNumber string) (*AccrualResponse, error) {
 	url := fmt.Sprintf("%s/api/orders/%s", c.baseURL, orderNumber)
 

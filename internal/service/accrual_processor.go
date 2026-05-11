@@ -11,6 +11,7 @@ import (
 	"github.com/onbehalfofhim/gofermart/internal/models"
 )
 
+// процессор асинхронной обработки заказов
 type AccrualProcessor struct {
 	orderService   *OrderService
 	balanceService *BalanceService
@@ -29,6 +30,7 @@ type AccrualProcessor struct {
 	wg sync.WaitGroup
 }
 
+// конструктор для создания процессора
 func NewAccrualProcessor(orderService *OrderService, balanceService *BalanceService, accrualClient *client.AccrualClient, logger *logger.Logger) *AccrualProcessor {
 	return &AccrualProcessor{
 		orderService:         orderService,
@@ -42,6 +44,7 @@ func NewAccrualProcessor(orderService *OrderService, balanceService *BalanceServ
 	}
 }
 
+// запуск процессора заказов
 func (p *AccrualProcessor) Start(ctx context.Context) {
 	p.logger.Info("starting accrual processor")
 
@@ -69,6 +72,7 @@ func (p *AccrualProcessor) Start(ctx context.Context) {
 	}
 }
 
+// проверяет: можно ли отправлять запрос во вненюю систему
 func (p *AccrualProcessor) canProcess() bool {
 	p.retryMu.RLock()
 	defer p.retryMu.RUnlock()
@@ -76,6 +80,7 @@ func (p *AccrualProcessor) canProcess() bool {
 	return time.Now().After(p.nextAllowedRequestAt)
 }
 
+// устанавливает период приостановки запросов
 func (p *AccrualProcessor) setRetryAfter(duration time.Duration) {
 	p.retryMu.Lock()
 	defer p.retryMu.Unlock()
@@ -86,6 +91,7 @@ func (p *AccrualProcessor) setRetryAfter(duration time.Duration) {
 	}
 }
 
+// собирает заказы на обработку и отправляет в канал воркеру
 func (p *AccrualProcessor) scheduleProcessingOrders(ctx context.Context) {
 	if !p.canProcess() {
 		p.retryMu.RLock()
@@ -118,6 +124,7 @@ func (p *AccrualProcessor) scheduleProcessingOrders(ctx context.Context) {
 	}
 }
 
+// получает из канала заказ на обработку
 func (p *AccrualProcessor) worker(ctx context.Context, workerID int) {
 	defer p.wg.Done()
 
@@ -138,6 +145,7 @@ func (p *AccrualProcessor) worker(ctx context.Context, workerID int) {
 	}
 }
 
+// опрашиват внешнюю систему, обновляет статус заказа/начисление/список операций пользователя
 func (p *AccrualProcessor) processOrder(ctx context.Context, order models.Order) {
 	p.logger.Info("Processing order", "order", order.Number, "status", order.Status)
 
