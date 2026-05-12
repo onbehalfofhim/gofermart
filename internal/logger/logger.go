@@ -28,3 +28,9 @@ func (l *Logger) Info(msg string, args ...any) {
 func (l *Logger) Error(msg string, args ...any) {
 	l.log.Error(msg, args...)
 }
+
+func NewWithSlog(l *slog.Logger) *Logger {
+	return &Logger{
+		log: l,
+	}
+}

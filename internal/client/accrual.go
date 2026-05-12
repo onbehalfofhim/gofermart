@@ -65,7 +65,7 @@ func (c *AccrualClient) GetOrder(ctx context.Context, orderNumber string) (*Accr
 
 		if value != "" {
 			seconds, err := strconv.Atoi(value)
-			if err != nil {
+			if err == nil {
 				retryAfter = time.Duration(seconds) * time.Second
 			}
 		}

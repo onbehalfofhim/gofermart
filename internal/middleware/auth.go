@@ -8,7 +8,7 @@ import (
 
 type contextKey string
 
-const UserIDKey contextKey = "UserId"
+const UserIdKey contextKey = "UserId"
 
 type JWTValidator interface {
 	ValidateToken(tokenString string) (string, error)
@@ -42,15 +42,15 @@ func Auth(jwtValidator JWTValidator) func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), UserIDKey, userID)
+			ctx := context.WithValue(r.Context(), UserIdKey, userID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
 
 // получение идентификатора пользователя из токена
-func GetUserID(ctx context.Context) (string, bool) {
-	id, ok := ctx.Value(UserIDKey).(string)
+func GetUserId(ctx context.Context) (string, bool) {
+	id, ok := ctx.Value(UserIdKey).(string)
 	return id, ok
 
 }

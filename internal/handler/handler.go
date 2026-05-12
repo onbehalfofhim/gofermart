@@ -151,7 +151,7 @@ func (h *Handler) Login() http.HandlerFunc {
 // обработчик регистрации заказа в системе лояльности
 func (h *Handler) CreateOrder() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userIDStr, ok := middleware.GetUserID(r.Context())
+		userIDStr, ok := middleware.GetUserId(r.Context())
 		if !ok {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
@@ -215,7 +215,7 @@ func (h *Handler) CreateOrder() http.HandlerFunc {
 // обработчик регистрации списания баллов
 func (h *Handler) CreateWithdraw() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userIDStr, ok := middleware.GetUserID(r.Context())
+		userIDStr, ok := middleware.GetUserId(r.Context())
 		if !ok {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
@@ -270,7 +270,7 @@ func (h *Handler) GetOrders() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		userIDStr, ok := middleware.GetUserID(r.Context())
+		userIDStr, ok := middleware.GetUserId(r.Context())
 		if !ok {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
@@ -315,7 +315,7 @@ func (h *Handler) GetBalance() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		userIDStr, ok := middleware.GetUserID(r.Context())
+		userIDStr, ok := middleware.GetUserId(r.Context())
 		if !ok {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
@@ -352,7 +352,7 @@ func (h *Handler) GetWithdrawals() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		userIDStr, ok := middleware.GetUserID(r.Context())
+		userIDStr, ok := middleware.GetUserId(r.Context())
 		if !ok {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
