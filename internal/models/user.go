@@ -1,0 +1,27 @@
+package models
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+// модель пользователя приложения
+type User struct {
+	ID           uuid.UUID `json:"id"`
+	Login        string    `json:"login"`
+	PasswordHash string    `json:"-"`
+	Balance      float64   `json:"-"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+// модель запроса аутентификации
+type AuthRequest struct {
+	Login    string `json:"login"`
+	Password string `json:"password"`
+}
+
+// модель ответа на аутентификацию пользователя
+type AuthResponse struct {
+	Token string `json:"token"`
+}

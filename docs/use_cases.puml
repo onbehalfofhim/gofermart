@@ -1,0 +1,74 @@
+"@startuml Business Cases"
+autonumber "<b>[00]"
+
+participant user as u
+participant gofermart_onlineshop as shop
+participant gofermart as gm
+participant accrual as acc
+
+activate gm
+
+== Регистрация пользователя ==
+    u->gm: POST /api/user/register
+    gm->gm: проверка логина на уникальность
+    gm->gm: хэширование пароля
+    gm->gm: выдача JWT-токена
+    gm-->u: JWT-токен
+
+group "Черный ящик"
+    u->shop: покупка
+    shop->acc: передача заказа для расчета баллов лояльности
+    acc-->shop
+    shop-->u
+end group
+
+== Загрузка номера заказа ==
+    u->gm: POST /api/user/orders
+    gm->gm: валидация JWT-токена
+    gm->gm: получить номер заказа из запроса
+    gm->gm: проверить номер заказа по алгоритму Луна
+    gm->gm: Связть номер заказа и пользователя
+    gm->acc: GET /api/orders/{number}
+    acc-->gm: статус расчета заказа
+
+    group async part
+        gm->acc: GET /api/orders/{number}
+        acc-->gm: статус расчета заказа
+        
+        gm->gm: обновить статус заказа
+        alt status = PROCESSED
+            gm->gm: начислить баллы на счет пользователя
+            gm->gm: добавить операцию
+        end
+    end
+    gm-->u:
+== Получение списка загруженных номеров заказов ==
+    u->gm: GET /api/user/orders
+    gm->gm: валидация JWT-токена
+    gm->gm: сбор информации о загруженных заказах
+    gm-->u: список заказов
+
+== Получение текущего баланса пользователя ==
+    u->gm: GET /api/user/balance
+    gm->gm: валидация JWT-токена
+    gm->gm: подсчет суммы списаний
+    gm->gm: получение текущего баланса
+    gm-->u: баланс пользовтеля и сумма списаний
+
+== Запрос на списание средств ==
+    u->gm: POST /api/user/balance/withdraw
+    gm->gm: валидация JWT-токена
+    gm->gm: списать баллы с баланса
+    gm->gm: проверить номер заказа по алгоритму Луна
+    gm->gm: сохранить операцию баланса
+    gm-->u: ОК (если было достаточно средств)
+
+== Получение информации о выводе средств ==
+    u->gm: GET /api/user/withdrawals
+    gm->gm: валидация JWT-токена
+    gm->gm: сбор информации о списаниях
+    gm-->u: списания пользователя
+
+deactivate gm
+
+@enduml

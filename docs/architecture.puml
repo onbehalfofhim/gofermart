@@ -1,0 +1,28 @@
+"@startuml Architecture"
+
+actor Client
+
+rectangle "API Layer (chi)" as API
+rectangle "Middleware (Auth, Logger)" as MW
+rectangle "Handlers" as H
+rectangle "Services" as S
+rectangle "Repositories" as R
+
+database "PostgreSQL" as DB
+
+rectangle "Accrual Worker (background job)" as Worker
+rectangle "Accrual System (External)" as Accrual
+
+Client --> API
+API --> MW
+MW --> H
+H --> S
+S --> R
+R --> DB
+
+S --> Accrual : submit order
+
+Worker --> Accrual : poll status
+Worker --> DB : update orders + balance
+
+@enduml

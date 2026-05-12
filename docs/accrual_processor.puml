@@ -1,0 +1,62 @@
+@startuml
+
+actor "Ticker" as T
+participant "AccrualProcessor" as P
+participant "OrderService" as OS
+participant "Worker" as W
+participant "AccrualClient" as AC
+participant "Accrual System" as AS
+participant "BalanceService" as BS
+database "PostgreSQL" as DB
+
+== Scheduler polling ==
+
+loop every pollInterval
+    T -> P : scheduleProcessingOrders()
+    P -> P : canProcess()
+    alt rate limited
+        P -> P : skip polling
+    else allowed
+        P -> OS : GetOrdersForProcessing()
+        OS -> DB : SELECT pending orders
+        DB --> OS : orders
+        OS --> P : []Order
+        loop for each order
+            P -> W : jobs <- order
+        end
+    end
+end
+
+== Worker processing ==
+W -> AC : GetOrder(orderNumber)
+AC -> AS : GET /api/orders/{number}
+
+alt 200 OK
+    AS --> AC : status + accrual
+    AC --> W : AccrualResponse
+    W -> OS : UpdateStatus()
+    OS -> DB : UPDATE orders
+    alt status == PROCESSED
+        W -> BS : CreateAccrual()
+        BS -> DB : BEGIN
+        BS -> DB : UPDATE users balance
+        BS -> DB : INSERT balance_operation
+        BS -> DB : COMMIT
+    end
+else 204 No Content
+    AS --> AC : 204
+    AC --> W : nil
+else 429 Too Many Requests
+    AS --> AC : Retry-After
+    AC --> W : RetryAfterError
+    W -> P : setRetryAfter()
+else network/server error
+    AS --> AC : error
+    AC --> W : error
+end
+
+== Graceful shutdown ==
+P -> W : close(jobs)
+W -> W : wg.Done()
+
+@enduml
