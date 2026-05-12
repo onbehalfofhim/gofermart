@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/onbehalfofhim/gofermart/internal/models"
 	"github.com/onbehalfofhim/gofermart/internal/repository"
 )
